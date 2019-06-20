@@ -189,7 +189,7 @@ var reloadCSS = require('_css_loader');
 
 module.hot.dispose(reloadCSS);
 module.hot.accept(reloadCSS);
-},{"_css_loader":"../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/css-loader.js"}],"src/models/Location.ts":[function(require,module,exports) {
+},{"_css_loader":"../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/css-loader.js"}],"src/Board/Location.ts":[function(require,module,exports) {
 "use strict";
 
 exports.__esModule = true;
@@ -251,7 +251,7 @@ function () {
 }();
 
 exports["default"] = Location;
-},{}],"src/models/V2.ts":[function(require,module,exports) {
+},{}],"src/util/V2.ts":[function(require,module,exports) {
 "use strict";
 
 exports.__esModule = true;
@@ -312,9 +312,9 @@ var __importDefault = this && this.__importDefault || function (mod) {
 
 exports.__esModule = true;
 
-var Location_1 = __importDefault(require("../models/Location"));
+var Location_1 = __importDefault(require("./Location"));
 
-var V2_1 = __importDefault(require("../models/V2"));
+var V2_1 = __importDefault(require("../util/V2"));
 
 var Board =
 /** @class */
@@ -381,7 +381,7 @@ function () {
 }();
 
 exports["default"] = Board;
-},{"../models/Location":"src/models/Location.ts","../models/V2":"src/models/V2.ts"}],"src/Board/BoardView.ts":[function(require,module,exports) {
+},{"./Location":"src/Board/Location.ts","../util/V2":"src/util/V2.ts"}],"src/Board/BoardView.ts":[function(require,module,exports) {
 "use strict";
 
 exports.__esModule = true;

@@ -1,5 +1,5 @@
-import Location from '../models/Location';
-import V2 from '../models/V2';
+import Location from './Location';
+import V2 from '../util/V2';
 
 export default class Board {
     private _grid: Location[][] = [];
