@@ -17,4 +17,19 @@ export default class Location {
                 return new Location(x, y, false, false, false);
         }
     }
+
+    getClassForRender(): string {
+        let classString = 'col';
+
+        switch (true) {
+            case this.isLocation:
+                classString += ' isLocation';
+            case this.isFilled:
+                classString += ' isFilled';
+            case this.isSelected:
+                classString += ' isSelected';
+        }
+
+        return classString;
+    }
 }

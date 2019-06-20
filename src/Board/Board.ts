@@ -1,5 +1,5 @@
-import Location from './Location';
-import V2 from './V2';
+import Location from '../models/Location';
+import V2 from '../models/V2';
 
 export default class Board {
     private _grid: Location[][] = [];
@@ -15,6 +15,10 @@ export default class Board {
                 row.map((col: string, x: number) => {
                     return Location.fromString(x,y,col);
                 })));
+    }
+
+    get grid(): Location[][] {
+        return this._grid;
     }
 
     prettyLog(): void {

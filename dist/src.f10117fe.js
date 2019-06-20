@@ -117,7 +117,79 @@ parcelRequire = (function (modules, cache, entry, globalName) {
   }
 
   return newRequire;
-})({"src/models/Location.ts":[function(require,module,exports) {
+})({"../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
+var bundleURL = null;
+
+function getBundleURLCached() {
+  if (!bundleURL) {
+    bundleURL = getBundleURL();
+  }
+
+  return bundleURL;
+}
+
+function getBundleURL() {
+  // Attempt to find the URL of the current script and use that as the base URL
+  try {
+    throw new Error();
+  } catch (err) {
+    var matches = ('' + err.stack).match(/(https?|file|ftp|chrome-extension|moz-extension):\/\/[^)\n]+/g);
+
+    if (matches) {
+      return getBaseURL(matches[0]);
+    }
+  }
+
+  return '/';
+}
+
+function getBaseURL(url) {
+  return ('' + url).replace(/^((?:https?|file|ftp|chrome-extension|moz-extension):\/\/.+)\/[^/]+$/, '$1') + '/';
+}
+
+exports.getBundleURL = getBundleURLCached;
+exports.getBaseURL = getBaseURL;
+},{}],"../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/css-loader.js":[function(require,module,exports) {
+var bundle = require('./bundle-url');
+
+function updateLink(link) {
+  var newLink = link.cloneNode();
+
+  newLink.onload = function () {
+    link.remove();
+  };
+
+  newLink.href = link.href.split('?')[0] + '?' + Date.now();
+  link.parentNode.insertBefore(newLink, link.nextSibling);
+}
+
+var cssTimeout = null;
+
+function reloadCSS() {
+  if (cssTimeout) {
+    return;
+  }
+
+  cssTimeout = setTimeout(function () {
+    var links = document.querySelectorAll('link[rel="stylesheet"]');
+
+    for (var i = 0; i < links.length; i++) {
+      if (bundle.getBaseURL(links[i].href) === bundle.getBundleURL()) {
+        updateLink(links[i]);
+      }
+    }
+
+    cssTimeout = null;
+  }, 50);
+}
+
+module.exports = reloadCSS;
+},{"./bundle-url":"../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/bundle-url.js"}],"styles/main.scss":[function(require,module,exports) {
+var reloadCSS = require('_css_loader');
+
+module.hot.dispose(reloadCSS);
+module.hot.accept(reloadCSS);
+},{"_css_loader":"../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/css-loader.js"}],"src/models/Location.ts":[function(require,module,exports) {
 "use strict";
 
 exports.__esModule = true;
@@ -156,6 +228,23 @@ function () {
       default:
         return new Location(x, y, false, false, false);
     }
+  };
+
+  Location.prototype.getClassForRender = function () {
+    var classString = 'col';
+
+    switch (true) {
+      case this.isLocation:
+        classString += ' isLocation';
+
+      case this.isFilled:
+        classString += ' isFilled';
+
+      case this.isSelected:
+        classString += ' isSelected';
+    }
+
+    return classString;
   };
 
   return Location;
@@ -212,7 +301,7 @@ function () {
 }();
 
 exports["default"] = V2;
-},{}],"src/models/Board.ts":[function(require,module,exports) {
+},{}],"src/Board/Board.ts":[function(require,module,exports) {
 "use strict";
 
 var __importDefault = this && this.__importDefault || function (mod) {
@@ -223,9 +312,9 @@ var __importDefault = this && this.__importDefault || function (mod) {
 
 exports.__esModule = true;
 
-var Location_1 = __importDefault(require("./Location"));
+var Location_1 = __importDefault(require("../models/Location"));
 
-var V2_1 = __importDefault(require("./V2"));
+var V2_1 = __importDefault(require("../models/V2"));
 
 var Board =
 /** @class */
@@ -244,6 +333,14 @@ function () {
       });
     }));
   };
+
+  Object.defineProperty(Board.prototype, "grid", {
+    get: function get() {
+      return this._grid;
+    },
+    enumerable: true,
+    configurable: true
+  });
 
   Board.prototype.prettyLog = function () {
     console.log("Board:");
@@ -284,7 +381,52 @@ function () {
 }();
 
 exports["default"] = Board;
-},{"./Location":"src/models/Location.ts","./V2":"src/models/V2.ts"}],"src/index.ts":[function(require,module,exports) {
+},{"../models/Location":"src/models/Location.ts","../models/V2":"src/models/V2.ts"}],"src/Board/BoardView.ts":[function(require,module,exports) {
+"use strict";
+
+exports.__esModule = true;
+
+var BoardView =
+/** @class */
+function () {
+  function BoardView(container, board) {
+    if (!container) {
+      console.warn("Tried to instantiate a BoarView without container");
+      return;
+    }
+
+    this._board = board;
+    this._container = container;
+    this.render();
+  }
+
+  BoardView.prototype.boardToHtmlString = function () {
+    var str = this._board.grid.map(function (row) {
+      return "<div class=\"board-row\">\n                " + row.map(function (loc) {
+        return "<div class=\"" + loc.getClassForRender() + "\"></div>";
+      }).join("") + "\n            </div>";
+    }).join("");
+
+    console.log(str);
+    return str;
+  };
+
+  BoardView.prototype.render = function () {
+    this._container.innerHTML = this.boardToHtmlString();
+  };
+
+  return BoardView;
+}();
+
+exports["default"] = BoardView;
+},{}],"src/constants.ts":[function(require,module,exports) {
+"use strict";
+
+exports.__esModule = true;
+exports["default"] = {
+  BOARD_CONTAINER: '.board'
+};
+},{}],"src/index.ts":[function(require,module,exports) {
 "use strict";
 
 var __importDefault = this && this.__importDefault || function (mod) {
@@ -295,13 +437,19 @@ var __importDefault = this && this.__importDefault || function (mod) {
 
 exports.__esModule = true;
 
-var Board_1 = __importDefault(require("./models/Board"));
+require("../styles/main.scss");
+
+var Board_1 = __importDefault(require("./Board/Board"));
+
+var BoardView_1 = __importDefault(require("./Board/BoardView"));
+
+var constants_1 = __importDefault(require("./constants"));
 
 var initialBoard = "\nxx111xx\nx11011x\nxx111xx\n";
 var board = Board_1["default"].fromString(initialBoard);
-board.prettyLog();
-window['board'] = board;
-},{"./models/Board":"src/models/Board.ts"}],"../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+var boardContainer = document.querySelector(constants_1["default"].BOARD_CONTAINER);
+var boardView = new BoardView_1["default"](boardContainer, board);
+},{"../styles/main.scss":"styles/main.scss","./Board/Board":"src/Board/Board.ts","./Board/BoardView":"src/Board/BoardView.ts","./constants":"src/constants.ts"}],"../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;

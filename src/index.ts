@@ -1,4 +1,8 @@
-import Board from './models/Board';
+import '../styles/main.scss';
+
+import Board from './Board/Board';
+import BoardView from './Board/BoardView';
+import constants from './constants';
 
 const initialBoard = `
 xx111xx
@@ -7,7 +11,5 @@ xx111xx
 `;
 
 const board = Board.fromString(initialBoard);
-
-board.prettyLog();
-
-window['board'] = board;
+const boardContainer = document.querySelector(constants.BOARD_CONTAINER) as HTMLElement;
+const boardView = new BoardView(boardContainer, board);
