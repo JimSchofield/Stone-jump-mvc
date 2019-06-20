@@ -162,6 +162,56 @@ function () {
 }();
 
 exports["default"] = Location;
+},{}],"src/models/V2.ts":[function(require,module,exports) {
+"use strict";
+
+exports.__esModule = true;
+
+var V2 =
+/** @class */
+function () {
+  function V2(x, y) {
+    this._x = +x;
+    this._y = +y;
+  }
+
+  Object.defineProperty(V2.prototype, "x", {
+    get: function get() {
+      return this._x;
+    },
+    enumerable: true,
+    configurable: true
+  });
+  Object.defineProperty(V2.prototype, "y", {
+    get: function get() {
+      return this._y;
+    },
+    enumerable: true,
+    configurable: true
+  });
+  Object.defineProperty(V2.prototype, "object", {
+    get: function get() {
+      return {
+        x: this._x,
+        y: this._y
+      };
+    },
+    enumerable: true,
+    configurable: true
+  });
+
+  V2.fromObject = function (obj) {
+    return new V2(obj.x, obj.y);
+  };
+
+  V2.fromArray = function (arr) {
+    return new V2(arr[0], arr[1]);
+  };
+
+  return V2;
+}();
+
+exports["default"] = V2;
 },{}],"src/models/Board.ts":[function(require,module,exports) {
 "use strict";
 
@@ -174,6 +224,8 @@ var __importDefault = this && this.__importDefault || function (mod) {
 exports.__esModule = true;
 
 var Location_1 = __importDefault(require("./Location"));
+
+var V2_1 = __importDefault(require("./V2"));
 
 var Board =
 /** @class */
@@ -208,13 +260,31 @@ function () {
         return "x";
       }).join("");
     }).join("\n"));
+  }; // Is there any way to overload this?
+
+
+  Board.prototype.getStoneRef = function () {
+    var args = [];
+
+    for (var _i = 0; _i < arguments.length; _i++) {
+      args[_i] = arguments[_i];
+    }
+
+    if (args[0] instanceof V2_1["default"]) {
+      return this._grid[args[0].y][args[0].x];
+    } // args is (number, number)
+
+
+    if (typeof args[0] === 'number' && typeof args[1] === 'number') {
+      return this._grid[args[1]][args[0]];
+    }
   };
 
   return Board;
 }();
 
 exports["default"] = Board;
-},{"./Location":"src/models/Location.ts"}],"src/index.ts":[function(require,module,exports) {
+},{"./Location":"src/models/Location.ts","./V2":"src/models/V2.ts"}],"src/index.ts":[function(require,module,exports) {
 "use strict";
 
 var __importDefault = this && this.__importDefault || function (mod) {
@@ -230,6 +300,7 @@ var Board_1 = __importDefault(require("./models/Board"));
 var initialBoard = "\nxx111xx\nx11011x\nxx111xx\n";
 var board = Board_1["default"].fromString(initialBoard);
 board.prettyLog();
+window['board'] = board;
 },{"./models/Board":"src/models/Board.ts"}],"../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';

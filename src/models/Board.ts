@@ -1,4 +1,5 @@
 import Location from './Location';
+import V2 from './V2';
 
 export default class Board {
     private _grid: Location[][] = [];
@@ -31,5 +32,17 @@ export default class Board {
                 }).join("")
             )).join("\n")
         )
+    }
+
+    // Is there any way to overload this?
+    getStoneRef(...args: any[]): Location {
+        if (args[0] instanceof V2) {
+            return this._grid[args[0].y][args[0].x];
+        }
+
+        // args is (number, number)
+        if (typeof args[0] === 'number' && typeof args[1] === 'number' ) {
+            return this._grid[args[1]][args[0]];
+        }
     }
 }
