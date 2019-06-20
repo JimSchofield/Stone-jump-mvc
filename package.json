@@ -1,0 +1,9 @@
+{
+  "name": "stone-jump-mvc",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^3.5.2"
+  }
+}
