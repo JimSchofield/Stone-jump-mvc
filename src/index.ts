@@ -13,3 +13,5 @@ xx111xx
 const board = Board.fromString(initialBoard);
 const boardContainer = document.querySelector(constants.BOARD_CONTAINER) as HTMLElement;
 const boardView = new BoardView(boardContainer, board);
+
+board.prettyLog();

@@ -1,0 +1,23 @@
+.board {
+
+}
+
+.board-row {
+    display: flex;
+}
+
+.col {
+    margin: 4px;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 3px solid rgba(black, .1);
+
+    &.isLocation {
+        border-color: black;
+    }
+
+    &.isFilled {
+        background: rgba(blue,.2);
+    }
+}

@@ -449,6 +449,7 @@ var initialBoard = "\nxx111xx\nx11011x\nxx111xx\n";
 var board = Board_1["default"].fromString(initialBoard);
 var boardContainer = document.querySelector(constants_1["default"].BOARD_CONTAINER);
 var boardView = new BoardView_1["default"](boardContainer, board);
+board.prettyLog();
 },{"../styles/main.scss":"styles/main.scss","./Board/Board":"src/Board/Board.ts","./Board/BoardView":"src/Board/BoardView.ts","./constants":"src/constants.ts"}],"../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
@@ -477,7 +478,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55987" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56569" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
