@@ -15,3 +15,5 @@ const boardContainer = document.querySelector(constants.BOARD_CONTAINER) as HTML
 const boardView = new BoardView(boardContainer, board);
 
 board.prettyLog();
+
+console.log(board.grid[1][3])

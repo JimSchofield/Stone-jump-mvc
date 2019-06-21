@@ -1,3 +1,4 @@
+import Location from './Location';
 import Board from "./Board";
 
 export default class BoardView {
@@ -16,12 +17,27 @@ export default class BoardView {
         this.render();
     }
 
+    getClassForRender(location: Location): string {
+        let classString = 'col';
+
+        if (location.isLocation) {
+            classString += ' isLocation';
+        }
+        if (location.isFilled) {
+            classString += ' isFilled';
+        }
+        if (location.isSelected) {
+            classString += ' isSelected';
+        }
+
+        return classString;
+    }
 
     boardToHtmlString() {
         const str = this._board.grid.map(row => (
             `<div class="board-row">
                 ${row.map(loc => (
-                    `<div class="${loc.getClassForRender()}"></div>`
+                    `<div class="${this.getClassForRender(loc)}"></div>`
                 )).join("")}
             </div>`
         )).join("");

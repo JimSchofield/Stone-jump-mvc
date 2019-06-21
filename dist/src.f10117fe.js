@@ -230,23 +230,6 @@ function () {
     }
   };
 
-  Location.prototype.getClassForRender = function () {
-    var classString = 'col';
-
-    switch (true) {
-      case this.isLocation:
-        classString += ' isLocation';
-
-      case this.isFilled:
-        classString += ' isFilled';
-
-      case this.isSelected:
-        classString += ' isSelected';
-    }
-
-    return classString;
-  };
-
   return Location;
 }();
 
@@ -400,10 +383,30 @@ function () {
     this.render();
   }
 
+  BoardView.prototype.getClassForRender = function (location) {
+    var classString = 'col';
+
+    if (location.isLocation) {
+      classString += ' isLocation';
+    }
+
+    if (location.isFilled) {
+      classString += ' isFilled';
+    }
+
+    if (location.isSelected) {
+      classString += ' isSelected';
+    }
+
+    return classString;
+  };
+
   BoardView.prototype.boardToHtmlString = function () {
+    var _this = this;
+
     var str = this._board.grid.map(function (row) {
       return "<div class=\"board-row\">\n                " + row.map(function (loc) {
-        return "<div class=\"" + loc.getClassForRender() + "\"></div>";
+        return "<div class=\"" + _this.getClassForRender(loc) + "\"></div>";
       }).join("") + "\n            </div>";
     }).join("");
 
@@ -450,6 +453,7 @@ var board = Board_1["default"].fromString(initialBoard);
 var boardContainer = document.querySelector(constants_1["default"].BOARD_CONTAINER);
 var boardView = new BoardView_1["default"](boardContainer, board);
 board.prettyLog();
+console.log(board.grid[1][3]);
 },{"../styles/main.scss":"styles/main.scss","./Board/Board":"src/Board/Board.ts","./Board/BoardView":"src/Board/BoardView.ts","./constants":"src/constants.ts"}],"../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
