@@ -8,10 +8,9 @@ import Referee from './logic/Referee';
 import { CartesianGeometry } from './logic/geometry';
 
 const initialBoard = `
-xx111xx
-x11011x
-xx111xx
-xxx1111
+0110
+x111
+1011
 `;
 
 // Board setup

@@ -1,6 +1,6 @@
 import V2 from "../util/V2";
 
-interface Move {
+export interface Move {
     from: V2;
     to: V2;
 }
@@ -14,7 +14,15 @@ export default class MoveList {
         }
     }
 
+    get length() {
+        return this._moveList.length;
+    }
+
     addMove(move: Move): void {
         this._moveList.push(move);
+    }
+
+    map(func: (move: Move) => any): any[] {
+        return this._moveList.map(func);
     }
 }

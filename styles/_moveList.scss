@@ -1,0 +1,14 @@
+.move-list {
+    position: fixed;
+    bottom: 1em;
+    left: 1em;
+    padding: .5em .75em;
+    background: #456;
+    color: white;
+    font-size: 18px;
+    border-radius: 4px;
+
+    h2 {
+        margin: .2em 0;
+    }
+}

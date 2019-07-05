@@ -189,52 +189,7 @@ var reloadCSS = require('_css_loader');
 
 module.hot.dispose(reloadCSS);
 module.hot.accept(reloadCSS);
-},{"_css_loader":"../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/css-loader.js"}],"src/Board/Location.ts":[function(require,module,exports) {
-"use strict";
-
-exports.__esModule = true;
-
-var Location =
-/** @class */
-function () {
-  function Location(x, y, isFilled, isLocation, isSelected) {
-    if (isFilled === void 0) {
-      isFilled = false;
-    }
-
-    if (isLocation === void 0) {
-      isLocation = false;
-    }
-
-    if (isSelected === void 0) {
-      isSelected = false;
-    }
-
-    this.x = x;
-    this.y = y;
-    this.isFilled = isFilled;
-    this.isLocation = isLocation;
-    this.isSelected = isSelected;
-  }
-
-  Location.fromString = function (x, y, str) {
-    switch (str) {
-      case '1':
-        return new Location(x, y, true, true, false);
-
-      case '0':
-        return new Location(x, y, false, true, false);
-
-      default:
-        return new Location(x, y, false, false, false);
-    }
-  };
-
-  return Location;
-}();
-
-exports["default"] = Location;
-},{}],"src/util/V2.ts":[function(require,module,exports) {
+},{"_css_loader":"../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/css-loader.js"}],"src/util/V2.ts":[function(require,module,exports) {
 "use strict";
 
 exports.__esModule = true;
@@ -291,12 +246,82 @@ function () {
   V2.add = function (v1, v2) {
     return new V2(v1.x + v2.x, v1.y + v2.y);
   };
+  /*---- Geometry ----*/
+
+
+  V2.midpoint = function (v, w) {
+    return new V2((v.x + w.x) / 2, (v.y + w.y) / 2);
+  };
+
+  V2.distance = function (v, w) {
+    return Math.sqrt(Math.pow(v.x - w.x, 2) + Math.pow(v.y - w.y, 2));
+  };
 
   return V2;
 }();
 
 exports["default"] = V2;
-},{}],"src/Board/Board.ts":[function(require,module,exports) {
+},{}],"src/Board/Location.ts":[function(require,module,exports) {
+"use strict";
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+
+exports.__esModule = true;
+
+var V2_1 = __importDefault(require("../util/V2"));
+
+var Location =
+/** @class */
+function () {
+  function Location(x, y, isFilled, isLocation, isSelected) {
+    if (isFilled === void 0) {
+      isFilled = false;
+    }
+
+    if (isLocation === void 0) {
+      isLocation = false;
+    }
+
+    if (isSelected === void 0) {
+      isSelected = false;
+    }
+
+    this.x = x;
+    this.y = y;
+    this.isFilled = isFilled;
+    this.isLocation = isLocation;
+    this.isSelected = isSelected;
+  }
+
+  Location.fromString = function (x, y, str) {
+    switch (str) {
+      case '1':
+        return new Location(x, y, true, true, false);
+
+      case '0':
+        return new Location(x, y, false, true, false);
+
+      default:
+        return new Location(x, y, false, false, false);
+    }
+  };
+
+  Object.defineProperty(Location.prototype, "v2", {
+    get: function get() {
+      return new V2_1["default"](this.x, this.y);
+    },
+    enumerable: true,
+    configurable: true
+  });
+  return Location;
+}();
+
+exports["default"] = Location;
+},{"../util/V2":"src/util/V2.ts"}],"src/Board/Board.ts":[function(require,module,exports) {
 "use strict";
 
 var __importDefault = this && this.__importDefault || function (mod) {
@@ -334,6 +359,24 @@ function () {
   Object.defineProperty(Board.prototype, "grid", {
     get: function get() {
       return this._grid;
+    },
+    enumerable: true,
+    configurable: true
+  });
+  Object.defineProperty(Board.prototype, "hasStoneSelected", {
+    get: function get() {
+      return this._grid.flat(2).some(function (loc) {
+        return loc.isSelected;
+      });
+    },
+    enumerable: true,
+    configurable: true
+  });
+  Object.defineProperty(Board.prototype, "selectedStone", {
+    get: function get() {
+      return this._grid.flat(2).find(function (selected) {
+        return selected.isSelected;
+      });
     },
     enumerable: true,
     configurable: true
@@ -378,12 +421,21 @@ function () {
     });
   };
 
-  Board.prototype.moveStone = function (move) {};
-
   Board.prototype.inBoardRange = function (coords) {
     var x = coords.x,
         y = coords.y;
     return x >= 0 && x <= this.maxX && y >= 0 && y <= this.maxY;
+  };
+
+  Board.prototype.selectStone = function (x, y) {
+    this.clearStoneSelect();
+    this.getStoneRef(x, y).isSelected = true;
+  };
+
+  Board.prototype.moveStone = function (move) {
+    this.getStoneRef(move.from).isFilled = false;
+    this.getStoneRef(V2_1["default"].midpoint(move.from, move.to)).isFilled = false;
+    this.getStoneRef(move.to).isFilled = true;
   };
 
   return Board;
@@ -453,6 +505,56 @@ exports.__esModule = true;
 exports["default"] = {
   BOARD_CONTAINER: '.board'
 };
+},{}],"src/Components/MoveListComponent.ts":[function(require,module,exports) {
+"use strict";
+
+exports.__esModule = true;
+
+var MoveListComponent =
+/** @class */
+function () {
+  function MoveListComponent(container) {
+    this._container = container;
+    this.render();
+  }
+
+  MoveListComponent.prototype.updateList = function (moveList) {
+    this.moveList = moveList;
+    this.render();
+  };
+
+  MoveListComponent.prototype.getListItems = function () {
+    return this.moveList.map(function (move) {
+      var _a = move.from,
+          x = _a.x,
+          y = _a.y;
+      var _b = move.to,
+          toX = _b.x,
+          toY = _b.y;
+      return "<li>(" + x + ", " + y + ") => (" + toX + ", " + toY + ")</li>";
+    }).join('');
+  };
+
+  MoveListComponent.prototype.clearList = function () {
+    this.moveList = null;
+    this.render();
+  };
+
+  MoveListComponent.prototype.render = function () {
+    this._container.innerHTML = "";
+
+    if (this.moveList && this.moveList.length) {
+      this._container.style.display = 'block';
+      this._container.innerHTML = "\n                <h2>Valid Moves from selection</h2>\n                <ul>\n                    " + this.getListItems() + "\n                </ul>\n            ";
+    } else {
+      this._container.style.display = 'none';
+    }
+  };
+
+  return MoveListComponent;
+}();
+
+exports["default"] = MoveListComponent;
 },{}],"src/Controller.ts":[function(require,module,exports) {
 "use strict";
 
@@ -466,27 +568,19 @@ exports.__esModule = true;
 
 var V2_1 = __importDefault(require("./util/V2"));
 
+var MoveListComponent_1 = __importDefault(require("./Components/MoveListComponent"));
+
 var Controller =
 /** @class */
 function () {
   function Controller(boardContainer, boardView, referee) {
-    this._board = boardView.board;
-    this._boardView = boardView;
-    this.boardContainer = boardContainer;
-    this._referee = referee;
-    this.init();
-  }
-
-  Controller.prototype.init = function () {
-    this.attachHandlers();
-  };
-
-  Controller.prototype.attachHandlers = function () {
     var _this = this;
 
-    this.boardContainer.addEventListener('click', function (event) {
+    this.handleBoardClick = function (event) {
       // Check if location
       if (!event.target.dataset.coords) {
+        _this.clearBoardSelection();
+
         return;
       } // peel off coords
 
@@ -495,35 +589,79 @@ function () {
         return +el;
       }),
           y = _a[0],
-          x = _a[1]; // if stone is a valid selection, clear all and select stone
+          x = _a[1]; // check if there is a selected stone, and if so, check if
+      // the event's target is a valid destination
 
 
-      if (!_this._board.getStoneRef(x, y).isFilled) {
-        // Don't move on to render
-        return;
-      } else {
-        _this.selectStone(x, y);
-      } // TODO: find possible moves from selection
+      if (_this._board.hasStoneSelected && _this._referee.moveIsValid({
+        from: _this._board.selectedStone.v2,
+        to: new V2_1["default"](x, y)
+      }, _this._board)) {
+        _this._board.moveStone({
+          from: _this._board.selectedStone.v2,
+          to: new V2_1["default"](x, y)
+        });
 
+        _this._boardView.render();
+      }
 
-      var moves = _this._referee.findMovesFrom(new V2_1["default"](x, y), _this._board); // render when all the calcs are done!
+      _this.selectNewStone(x, y);
+    };
 
+    this._board = boardView.board;
+    this._boardView = boardView;
+    this.boardContainer = boardContainer;
+    this._referee = referee;
+    this.init();
+  }
 
-      _this._boardView.render();
-    });
+  Controller.prototype.init = function () {
+    this.createChildren().attachHandlers();
   };
 
-  Controller.prototype.selectStone = function (x, y) {
+  Controller.prototype.createChildren = function () {
+    var moveListcontainer = document.querySelector('.valid-moves');
+    this._validMoveElement = new MoveListComponent_1["default"](moveListcontainer);
+    return this;
+  };
+
+  Controller.prototype.attachHandlers = function () {
+    this.boardContainer.addEventListener('click', this.handleBoardClick);
+    return this;
+  };
+
+  Controller.prototype.selectNewStone = function (x, y) {
+    // if stone is a valid selection, clear all and select stone
+    if (!this._board.getStoneRef(x, y).isFilled) {
+      // Don't move on to render if not filled
+      this.clearBoardSelection();
+      return;
+    }
+
+    this._board.selectStone(x, y); // find possible moves from selection
+
+
+    var moves = this._referee.findMovesFrom(new V2_1["default"](x, y), this._board);
+
+    this._validMoveElement.updateList(moves); // render when all the calcs are done!
+
+
+    this._boardView.render();
+  };
+
+  Controller.prototype.clearBoardSelection = function () {
     this._board.clearStoneSelect();
 
-    this._board.getStoneRef(x, y).isSelected = true;
+    this._validMoveElement.clearList();
+
+    this._boardView.render();
   };
 
   return Controller;
 }();
 
 exports["default"] = Controller;
-},{"./util/V2":"src/util/V2.ts"}],"src/logic/MoveList.ts":[function(require,module,exports) {
+},{"./util/V2":"src/util/V2.ts","./Components/MoveListComponent":"src/Components/MoveListComponent.ts"}],"src/logic/MoveList.ts":[function(require,module,exports) {
 "use strict";
 
 exports.__esModule = true;
@@ -539,8 +677,20 @@ function () {
     }
   }
 
+  Object.defineProperty(MoveList.prototype, "length", {
+    get: function get() {
+      return this._moveList.length;
+    },
+    enumerable: true,
+    configurable: true
+  });
+
   MoveList.prototype.addMove = function (move) {
     this._moveList.push(move);
+  };
+
+  MoveList.prototype.map = function (func) {
+    return this._moveList.map(func);
   };
 
   return MoveList;
@@ -560,6 +710,8 @@ exports.__esModule = true;
 
 var MoveList_1 = __importDefault(require("./MoveList"));
 
+var V2_1 = __importDefault(require("../util/V2"));
+
 var Referee =
 /** @class */
 function () {
@@ -568,39 +720,75 @@ function () {
   }
 
   Referee.prototype.findMovesFrom = function (coords, board) {
+    var _this = this;
+
     var legalMoves = new MoveList_1["default"]();
 
     this._geometry.translations.forEach(function (t) {
       if (!board.getStoneRef(coords).isFilled) {
         return;
-      } // make sure midpoint is in range and filled
+      }
 
+      var from = coords;
+      var to = t(t(from));
 
-      var mid = t(coords);
-
-      if (!(board.inBoardRange(mid) && board.getStoneRef(mid).isFilled)) {
-        return;
-      } // check to make sure destination location is in range
-      // if so, valid move!
-
-
-      var dest = t(mid);
-
-      if (!board.inBoardRange(dest) || board.getStoneRef(dest).isFilled) {
+      if (!_this.moveIsValid({
+        from: from,
+        to: to
+      }, board)) {
         return;
       }
 
-      console.log(dest);
+      ; // Whew, we made it and this move is legal:
+
+      legalMoves.addMove({
+        from: from,
+        to: to
+      });
     });
 
     return legalMoves;
+  };
+
+  Referee.prototype.moveIsValid = function (move, board) {
+    // make sure moves are always a distance of two
+    if (V2_1["default"].distance(move.from, move.to) !== 2) {
+      return false;
+    }
+
+    if (!board.getStoneRef(move.from).isFilled) {
+      return false;
+    } // make sure midpoint is in range and filled
+
+
+    var mid = V2_1["default"].midpoint(move.from, move.to);
+
+    if (!(board.inBoardRange(mid) && board.getStoneRef(mid).isFilled)) {
+      return false;
+    } // check to make sure destination location is in range and not filled location
+    // if so, valid move!
+
+
+    var dest = move.to;
+
+    if (!board.inBoardRange(dest)) {
+      return false;
+    }
+
+    var destStoneRef = board.getStoneRef(dest);
+
+    if (!(destStoneRef.isLocation && !destStoneRef.isFilled)) {
+      return false;
+    }
+
+    return true;
   };
 
   return Referee;
 }();
 
 exports["default"] = Referee;
-},{"./MoveList":"src/logic/MoveList.ts"}],"src/logic/geometry.ts":[function(require,module,exports) {
+},{"./MoveList":"src/logic/MoveList.ts","../util/V2":"src/util/V2.ts"}],"src/logic/geometry.ts":[function(require,module,exports) {
 "use strict";
 
 var __importDefault = this && this.__importDefault || function (mod) {
@@ -671,7 +859,7 @@ var Referee_1 = __importDefault(require("./logic/Referee"));
 
 var geometry_1 = require("./logic/geometry");
 
-var initialBoard = "\nxx111xx\nx11011x\nxx111xx\nxxx1111\n"; // Board setup
+var initialBoard = "\n0110\nx111\n1011\n"; // Board setup
 
 var board = Board_1["default"].fromString(initialBoard);
 var boardContainer = document.querySelector(constants_1["default"].BOARD_CONTAINER);

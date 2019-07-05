@@ -1,3 +1,5 @@
+import V2 from "../util/V2";
+
 export default class Location {
     constructor(
         public x: number,
@@ -16,5 +18,9 @@ export default class Location {
             default:
                 return new Location(x, y, false, false, false);
         }
+    }
+
+    get v2(): V2 {
+        return new V2(this.x, this.y);
     }
 }

@@ -1,6 +1,6 @@
 import Location from './Location';
 import V2 from '../util/V2';
-import { Move } from '../logic/Translation';
+import { Move } from '../logic/MoveList';
 
 export default class Board {
     private _grid: Location[][] = [[]];
@@ -24,6 +24,14 @@ export default class Board {
 
     get grid(): Location[][] {
         return this._grid;
+    }
+
+    get hasStoneSelected(): boolean {
+        return this._grid.flat(2).some((loc: Location) => loc.isSelected);
+    }
+
+    get selectedStone(): Location {
+        return this._grid.flat(2).find((selected: Location) => selected.isSelected);
     }
 
     prettyLog(): void {
@@ -58,10 +66,6 @@ export default class Board {
             .map((location: Location) => location.isSelected = false);
     }
 
-    moveStone(move: Move): void {
-        
-    } 
-
     inBoardRange(coords: V2): boolean {
         const { x, y } = coords;
             
@@ -70,5 +74,16 @@ export default class Board {
             &&
             y >= 0 && y <= this.maxY
         );
+    }
+
+    selectStone(x: number,y: number): void {
+        this.clearStoneSelect();
+        this.getStoneRef(x,y).isSelected = true;
+    }
+
+    moveStone(move: Move): void {
+        this.getStoneRef(move.from).isFilled = false;
+        this.getStoneRef(V2.midpoint(move.from, move.to)).isFilled = false;
+        this.getStoneRef(move.to).isFilled = true;
     }
 }
