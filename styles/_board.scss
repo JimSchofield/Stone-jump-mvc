@@ -12,6 +12,7 @@
     height: 100px;
     border-radius: 50%;
     border: 3px solid rgba(black, .1);
+    cursor: pointer;
 
     &.isLocation {
         border-color: black;
@@ -19,5 +20,10 @@
 
     &.isFilled {
         background: rgba(blue,.2);
+    }
+
+    &.isSelected {
+        border-color: darkgreen;
+        background: rgba(blue,.5)
     }
 }

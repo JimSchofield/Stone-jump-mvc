@@ -2,7 +2,7 @@ import Location from './Location';
 import Board from "./Board";
 
 export default class BoardView {
-    private _board: Board;
+    board: Board;
     private _container: HTMLElement;
 
     constructor(container: HTMLElement, board: Board) {
@@ -11,7 +11,7 @@ export default class BoardView {
             return;
         }
 
-        this._board = board;
+        this.board = board;
         this._container = container;
 
         this.render();
@@ -34,14 +34,13 @@ export default class BoardView {
     }
 
     boardToHtmlString() {
-        const str = this._board.grid.map(row => (
+        const str = this.board.grid.map((row,y) => (
             `<div class="board-row">
-                ${row.map(loc => (
-                    `<div class="${this.getClassForRender(loc)}"></div>`
+                ${row.map((loc,x) => (
+                    `<div class="${this.getClassForRender(loc)}" data-coords="${y},${x}"></div>`
                 )).join("")}
             </div>`
         )).join("");
-        console.log(str);
         return str;
     }
 

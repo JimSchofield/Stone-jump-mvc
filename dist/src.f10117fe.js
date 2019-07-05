@@ -279,6 +279,18 @@ function () {
   V2.fromArray = function (arr) {
     return new V2(arr[0], arr[1]);
   };
+  /*---- Operations ----*/
+
+
+  V2.prototype.add = function (v2) {
+    this._x += v2.x;
+    this._y += v2.y;
+    return this;
+  };
+
+  V2.add = function (v1, v2) {
+    return new V2(v1.x + v2.x, v1.y + v2.y);
+  };
 
   return V2;
 }();
@@ -303,8 +315,10 @@ var Board =
 /** @class */
 function () {
   function Board(grid) {
-    this._grid = [];
+    this._grid = [[]];
     this._grid = grid;
+    this.maxX = this._grid[0].length - 1;
+    this.maxY = this._grid.length - 1;
   }
 
   Board.fromString = function (string) {
@@ -340,7 +354,7 @@ function () {
         return "x";
       }).join("");
     }).join("\n"));
-  }; // Is there any way to overload this?
+  }; // Is there any other way to overload this?
 
 
   Board.prototype.getStoneRef = function () {
@@ -351,13 +365,25 @@ function () {
     }
 
     if (args[0] instanceof V2_1["default"]) {
-      return this._grid[args[0].y][args[0].x];
-    } // args is (number, number)
+      return this._grid[+args[0].y][+args[0].x];
+    } // (number, number), ASSUME
 
 
-    if (typeof args[0] === 'number' && typeof args[1] === 'number') {
-      return this._grid[args[1]][args[0]];
-    }
+    return this._grid[+args[1]][+args[0]];
+  };
+
+  Board.prototype.clearStoneSelect = function () {
+    this._grid.flat(2).map(function (location) {
+      return location.isSelected = false;
+    });
+  };
+
+  Board.prototype.moveStone = function (move) {};
+
+  Board.prototype.inBoardRange = function (coords) {
+    var x = coords.x,
+        y = coords.y;
+    return x >= 0 && x <= this.maxX && y >= 0 && y <= this.maxY;
   };
 
   return Board;
@@ -378,7 +404,7 @@ function () {
       return;
     }
 
-    this._board = board;
+    this.board = board;
     this._container = container;
     this.render();
   }
@@ -404,13 +430,11 @@ function () {
   BoardView.prototype.boardToHtmlString = function () {
     var _this = this;
 
-    var str = this._board.grid.map(function (row) {
-      return "<div class=\"board-row\">\n                " + row.map(function (loc) {
-        return "<div class=\"" + _this.getClassForRender(loc) + "\"></div>";
+    var str = this.board.grid.map(function (row, y) {
+      return "<div class=\"board-row\">\n                " + row.map(function (loc, x) {
+        return "<div class=\"" + _this.getClassForRender(loc) + "\" data-coords=\"" + y + "," + x + "\"></div>";
       }).join("") + "\n            </div>";
     }).join("");
-
-    console.log(str);
     return str;
   };
 
@@ -429,7 +453,200 @@ exports.__esModule = true;
 exports["default"] = {
   BOARD_CONTAINER: '.board'
 };
-},{}],"src/index.ts":[function(require,module,exports) {
+},{}],"src/Controller.ts":[function(require,module,exports) {
+"use strict";
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+
+exports.__esModule = true;
+
+var V2_1 = __importDefault(require("./util/V2"));
+
+var Controller =
+/** @class */
+function () {
+  function Controller(boardContainer, boardView, referee) {
+    this._board = boardView.board;
+    this._boardView = boardView;
+    this.boardContainer = boardContainer;
+    this._referee = referee;
+    this.init();
+  }
+
+  Controller.prototype.init = function () {
+    this.attachHandlers();
+  };
+
+  Controller.prototype.attachHandlers = function () {
+    var _this = this;
+
+    this.boardContainer.addEventListener('click', function (event) {
+      // Check if location
+      if (!event.target.dataset.coords) {
+        return;
+      } // peel off coords
+
+
+      var _a = event.target.dataset.coords.split(",").map(function (el) {
+        return +el;
+      }),
+          y = _a[0],
+          x = _a[1]; // if stone is a valid selection, clear all and select stone
+
+
+      if (!_this._board.getStoneRef(x, y).isFilled) {
+        // Don't move on to render
+        return;
+      } else {
+        _this.selectStone(x, y);
+      } // TODO: find possible moves from selection
+
+
+      var moves = _this._referee.findMovesFrom(new V2_1["default"](x, y), _this._board); // render when all the calcs are done!
+
+
+      _this._boardView.render();
+    });
+  };
+
+  Controller.prototype.selectStone = function (x, y) {
+    this._board.clearStoneSelect();
+
+    this._board.getStoneRef(x, y).isSelected = true;
+  };
+
+  return Controller;
+}();
+
+exports["default"] = Controller;
+},{"./util/V2":"src/util/V2.ts"}],"src/logic/MoveList.ts":[function(require,module,exports) {
+"use strict";
+
+exports.__esModule = true;
+
+var MoveList =
+/** @class */
+function () {
+  function MoveList(moveList) {
+    this._moveList = [];
+
+    if (moveList && moveList.length) {
+      this._moveList = moveList;
+    }
+  }
+
+  MoveList.prototype.addMove = function (move) {
+    this._moveList.push(move);
+  };
+
+  return MoveList;
+}();
+
+exports["default"] = MoveList;
+},{}],"src/logic/Referee.ts":[function(require,module,exports) {
+"use strict";
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+
+exports.__esModule = true;
+
+var MoveList_1 = __importDefault(require("./MoveList"));
+
+var Referee =
+/** @class */
+function () {
+  function Referee(geometry) {
+    this._geometry = geometry;
+  }
+
+  Referee.prototype.findMovesFrom = function (coords, board) {
+    var legalMoves = new MoveList_1["default"]();
+
+    this._geometry.translations.forEach(function (t) {
+      if (!board.getStoneRef(coords).isFilled) {
+        return;
+      } // make sure midpoint is in range and filled
+
+
+      var mid = t(coords);
+
+      if (!(board.inBoardRange(mid) && board.getStoneRef(mid).isFilled)) {
+        return;
+      } // check to make sure destination location is in range
+      // if so, valid move!
+
+
+      var dest = t(mid);
+
+      if (!board.inBoardRange(dest) || board.getStoneRef(dest).isFilled) {
+        return;
+      }
+
+      console.log(dest);
+    });
+
+    return legalMoves;
+  };
+
+  return Referee;
+}();
+
+exports["default"] = Referee;
+},{"./MoveList":"src/logic/MoveList.ts"}],"src/logic/geometry.ts":[function(require,module,exports) {
+"use strict";
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+
+exports.__esModule = true;
+
+var V2_1 = __importDefault(require("../util/V2"));
+
+var Geometry =
+/** @class */
+function () {
+  function Geometry(t) {
+    this._translations = t;
+  }
+
+  Object.defineProperty(Geometry.prototype, "translations", {
+    get: function get() {
+      return this._translations;
+    },
+    enumerable: true,
+    configurable: true
+  });
+  return Geometry;
+}();
+
+exports["default"] = Geometry;
+var cartesianMoveList = [// up
+function (coords) {
+  return V2_1["default"].add(new V2_1["default"](0, -1), coords);
+}, // down
+function (coords) {
+  return V2_1["default"].add(new V2_1["default"](0, 1), coords);
+}, // left
+function (coords) {
+  return V2_1["default"].add(new V2_1["default"](-1, 0), coords);
+}, // right
+function (coords) {
+  return V2_1["default"].add(new V2_1["default"](1, 0), coords);
+}];
+var CartesianGeometry = new Geometry(cartesianMoveList);
+exports.CartesianGeometry = CartesianGeometry;
+},{"../util/V2":"src/util/V2.ts"}],"src/index.ts":[function(require,module,exports) {
 "use strict";
 
 var __importDefault = this && this.__importDefault || function (mod) {
@@ -448,13 +665,21 @@ var BoardView_1 = __importDefault(require("./Board/BoardView"));
 
 var constants_1 = __importDefault(require("./constants"));
 
-var initialBoard = "\nxx111xx\nx11011x\nxx111xx\n";
+var Controller_1 = __importDefault(require("./Controller"));
+
+var Referee_1 = __importDefault(require("./logic/Referee"));
+
+var geometry_1 = require("./logic/geometry");
+
+var initialBoard = "\nxx111xx\nx11011x\nxx111xx\nxxx1111\n"; // Board setup
+
 var board = Board_1["default"].fromString(initialBoard);
 var boardContainer = document.querySelector(constants_1["default"].BOARD_CONTAINER);
-var boardView = new BoardView_1["default"](boardContainer, board);
-board.prettyLog();
-console.log(board.grid[1][3]);
-},{"../styles/main.scss":"styles/main.scss","./Board/Board":"src/Board/Board.ts","./Board/BoardView":"src/Board/BoardView.ts","./constants":"src/constants.ts"}],"../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+var boardView = new BoardView_1["default"](boardContainer, board); // Move refereeing
+
+var referee = new Referee_1["default"](geometry_1.CartesianGeometry);
+var controller = new Controller_1["default"](boardContainer, boardView, referee);
+},{"../styles/main.scss":"styles/main.scss","./Board/Board":"src/Board/Board.ts","./Board/BoardView":"src/Board/BoardView.ts","./constants":"src/constants.ts","./Controller":"src/Controller.ts","./logic/Referee":"src/logic/Referee.ts","./logic/geometry":"src/logic/geometry.ts"}],"../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -482,7 +707,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56569" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57848" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

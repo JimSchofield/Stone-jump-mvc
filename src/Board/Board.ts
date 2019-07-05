@@ -1,11 +1,16 @@
 import Location from './Location';
 import V2 from '../util/V2';
+import { Move } from '../logic/Translation';
 
 export default class Board {
-    private _grid: Location[][] = [];
+    private _grid: Location[][] = [[]];
+    public maxX: number;
+    public maxY: number;
 
     constructor(grid: Location[][]) {
         this._grid = grid;
+        this.maxX = this._grid[0].length - 1;
+        this.maxY = this._grid.length - 1;
     }
 
     static fromString(string: string): Board | any {
@@ -38,15 +43,32 @@ export default class Board {
         )
     }
 
-    // Is there any way to overload this?
+    // Is there any other way to overload this?
     getStoneRef(...args: any[]): Location {
         if (args[0] instanceof V2) {
-            return this._grid[args[0].y][args[0].x];
+            return this._grid[+args[0].y][+args[0].x];
         }
 
-        // args is (number, number)
-        if (typeof args[0] === 'number' && typeof args[1] === 'number' ) {
-            return this._grid[args[1]][args[0]];
-        }
+        // (number, number), ASSUME
+        return this._grid[+args[1]][+args[0]];
+    }
+
+    clearStoneSelect(): void {
+        this._grid.flat(2)
+            .map((location: Location) => location.isSelected = false);
+    }
+
+    moveStone(move: Move): void {
+        
+    } 
+
+    inBoardRange(coords: V2): boolean {
+        const { x, y } = coords;
+            
+        return (
+            x >= 0 && x <= this.maxX
+            &&
+            y >= 0 && y <= this.maxY
+        );
     }
 }

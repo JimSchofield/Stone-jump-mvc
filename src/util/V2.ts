@@ -29,4 +29,16 @@ export default class V2  {
     static fromArray(arr: [number, number]): V2 {
         return new V2(arr[0], arr[1]);
     }
+
+    /*---- Operations ----*/
+
+    add(v2: V2): this {
+        this._x += v2.x;
+        this._y += v2.y;
+        return this;
+    }
+
+    static add(v1: V2, v2: V2): V2 {
+        return new V2(v1.x + v2.x, v1.y + v2.y);
+    }
 }
