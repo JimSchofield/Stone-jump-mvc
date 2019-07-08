@@ -59,12 +59,12 @@ export default class Controller {
                 from: this._board.selectedStone.v2,
                 to: new V2(x,y),
             }, this._board)
-            ) {
-                this._board.moveStone({
-                    from: this._board.selectedStone.v2,
-                    to: new V2(x,y),
-                });
-                this._boardView.render();
+        ) {
+            this._board.moveStone({
+                from: this._board.selectedStone.v2,
+                to: new V2(x,y),
+            });
+            this._boardView.render();
         }
 
         this.selectNewStone(x,y);
