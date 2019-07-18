@@ -234,6 +234,10 @@ function () {
   V2.fromArray = function (arr) {
     return new V2(arr[0], arr[1]);
   };
+
+  V2.prototype.clone = function () {
+    return V2.fromObject(this);
+  };
   /*---- Operations ----*/
 
 
@@ -297,6 +301,10 @@ function () {
     this.isSelected = isSelected;
   }
 
+  Location.fromLocation = function (loc) {
+    return new Location(loc.x, loc.y, loc.isFilled, loc.isLocation, loc.isSelected);
+  };
+
   Location.fromString = function (x, y, str) {
     switch (str) {
       case '1':
@@ -317,6 +325,11 @@ function () {
     enumerable: true,
     configurable: true
   });
+
+  Location.prototype.clone = function () {
+    return Location.fromLocation(this);
+  };
+
   return Location;
 }();
 
@@ -363,6 +376,13 @@ function () {
     enumerable: true,
     configurable: true
   });
+  Object.defineProperty(Board.prototype, "flatGrid", {
+    get: function get() {
+      return this._grid.flat();
+    },
+    enumerable: true,
+    configurable: true
+  });
   Object.defineProperty(Board.prototype, "hasStoneSelected", {
     get: function get() {
       return this._grid.flat(2).some(function (loc) {
@@ -397,6 +417,16 @@ function () {
         return "x";
       }).join("");
     }).join("\n"));
+  };
+
+  Board.prototype.clone = function () {
+    var newGrid = this._grid.map(function (row) {
+      return row.map(function (loc) {
+        return loc.clone();
+      });
+    });
+
+    return new Board(newGrid);
   }; // Is there any other way to overload this?
 
 
@@ -436,6 +466,17 @@ function () {
     this.getStoneRef(move.from).isFilled = false;
     this.getStoneRef(V2_1["default"].midpoint(move.from, move.to)).isFilled = false;
     this.getStoneRef(move.to).isFilled = true;
+    return this;
+  };
+
+  Board.prototype.countStonesLeft = function () {
+    var count = 0;
+    this.flatGrid.forEach(function (loc) {
+      if (loc.isFilled) {
+        count++;
+      }
+    });
+    return count;
   };
 
   return Board;
@@ -666,6 +707,23 @@ exports["default"] = Controller;
 
 exports.__esModule = true;
 
+var Move =
+/** @class */
+function () {
+  function Move(from, to) {
+    this.from = from;
+    this.to = to;
+  }
+
+  Move.prototype.clone = function () {
+    return new Move(this.from.clone(), this.to.clone());
+  };
+
+  return Move;
+}();
+
+exports.Move = Move;
+
 var MoveList =
 /** @class */
 function () {
@@ -693,12 +751,32 @@ function () {
     return this._moveList.map(func);
   };
 
+  MoveList.prototype.clone = function () {
+    return new MoveList(this._moveList.map(function (move) {
+      return move.clone();
+    }));
+  };
+
+  MoveList.join = function (ml1, ml2) {
+    return new MoveList(ml1.clone()._moveList.concat(ml2.clone()._moveList));
+  };
+
   return MoveList;
 }();
 
 exports["default"] = MoveList;
 },{}],"src/logic/Referee.ts":[function(require,module,exports) {
 "use strict";
+
+var __importStar = this && this.__importStar || function (mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) for (var k in mod) {
+    if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+  }
+  result["default"] = mod;
+  return result;
+};
 
 var __importDefault = this && this.__importDefault || function (mod) {
   return mod && mod.__esModule ? mod : {
@@ -708,7 +786,7 @@ var __importDefault = this && this.__importDefault || function (mod) {
 
 exports.__esModule = true;
 
-var MoveList_1 = __importDefault(require("./MoveList"));
+var MoveList_1 = __importStar(require("./MoveList"));
 
 var V2_1 = __importDefault(require("../util/V2"));
 
@@ -741,10 +819,7 @@ function () {
 
       ; // Whew, we made it and this move is legal:
 
-      legalMoves.addMove({
-        from: from,
-        to: to
-      });
+      legalMoves.addMove(new MoveList_1.Move(from, to));
     });
 
     return legalMoves;
@@ -788,7 +863,59 @@ function () {
 }();
 
 exports["default"] = Referee;
-},{"./MoveList":"src/logic/MoveList.ts","../util/V2":"src/util/V2.ts"}],"src/logic/geometry.ts":[function(require,module,exports) {
+},{"./MoveList":"src/logic/MoveList.ts","../util/V2":"src/util/V2.ts"}],"src/logic/Solver.ts":[function(require,module,exports) {
+"use strict";
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+
+exports.__esModule = true;
+
+var MoveList_1 = __importDefault(require("./MoveList"));
+
+var Solver =
+/** @class */
+function () {
+  function Solver() {}
+
+  Solver.listAllMoves = function (board, referee) {
+    var list = new MoveList_1["default"]();
+    board.flatGrid.forEach(function (location) {
+      list = MoveList_1["default"].join(referee.findMovesFrom(location.v2, board), list);
+    });
+    return list;
+  };
+
+  Solver.solve = function (board, referee) {
+    window.iterationCount = window.iterationCount + 1 || 0; // find all possible moves
+
+    var possibleMoves = this.listAllMoves(board, referee); // console.log('calculating...')
+    // if possibleMoves length === 0 , log total left
+
+    if (possibleMoves.length === 0 && board.countStonesLeft() === 1) {
+      console.log(board.prettyLog());
+    } // for each move, execute move
+
+
+    possibleMoves._moveList.forEach(function (move) {
+      if (window.iterationCount % 10000 === 0) {
+        setTimeout(function () {
+          Solver.solve(board.clone().moveStone(move), referee);
+        }, 0);
+      } else {
+        Solver.solve(board.clone().moveStone(move), referee);
+      }
+    });
+  };
+
+  return Solver;
+}();
+
+exports["default"] = Solver;
+},{"./MoveList":"src/logic/MoveList.ts"}],"src/logic/geometry.ts":[function(require,module,exports) {
 "use strict";
 
 var __importDefault = this && this.__importDefault || function (mod) {
@@ -857,17 +984,29 @@ var Controller_1 = __importDefault(require("./Controller"));
 
 var Referee_1 = __importDefault(require("./logic/Referee"));
 
+var Solver_1 = __importDefault(require("./logic/Solver"));
+
 var geometry_1 = require("./logic/geometry");
 
-var initialBoard = "\n0110\nx111\n1011\n"; // Board setup
+var initialBoard = "\nxx111xx\nxx111xx\n1111111\n1110111\n1111111\nxx111xx\nxx111xx\n"; // const initialBoard = `
+// xx1xx
+// x111x
+// 11011
+// x111x
+// xx1xx
+// `;
+// Board setup
 
 var board = Board_1["default"].fromString(initialBoard);
 var boardContainer = document.querySelector(constants_1["default"].BOARD_CONTAINER);
-var boardView = new BoardView_1["default"](boardContainer, board); // Move refereeing
-
+var boardView = new BoardView_1["default"](boardContainer, board);
 var referee = new Referee_1["default"](geometry_1.CartesianGeometry);
 var controller = new Controller_1["default"](boardContainer, boardView, referee);
-},{"../styles/main.scss":"styles/main.scss","./Board/Board":"src/Board/Board.ts","./Board/BoardView":"src/Board/BoardView.ts","./constants":"src/constants.ts","./Controller":"src/Controller.ts","./logic/Referee":"src/logic/Referee.ts","./logic/geometry":"src/logic/geometry.ts"}],"../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+setInterval(function () {
+  console.log(window.iterationCount);
+}, 5000);
+Solver_1["default"].solve(board, referee);
+},{"../styles/main.scss":"styles/main.scss","./Board/Board":"src/Board/Board.ts","./Board/BoardView":"src/Board/BoardView.ts","./constants":"src/constants.ts","./Controller":"src/Controller.ts","./logic/Referee":"src/logic/Referee.ts","./logic/Solver":"src/logic/Solver.ts","./logic/geometry":"src/logic/geometry.ts"}],"../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -895,7 +1034,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57031" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57975" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

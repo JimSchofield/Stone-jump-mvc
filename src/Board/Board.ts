@@ -26,6 +26,10 @@ export default class Board {
         return this._grid;
     }
 
+    get flatGrid(): Location[] {
+        return this._grid.flat();
+    }
+
     get hasStoneSelected(): boolean {
         return this._grid.flat(2).some((loc: Location) => loc.isSelected);
     }
@@ -49,6 +53,13 @@ export default class Board {
                 }).join("")
             )).join("\n")
         )
+    }
+
+    clone(): Board {
+        const newGrid = this._grid.map(row => {
+            return row.map((loc: Location) => loc.clone());
+        })
+        return new Board(newGrid);
     }
 
     // Is there any other way to overload this?
@@ -81,9 +92,20 @@ export default class Board {
         this.getStoneRef(x,y).isSelected = true;
     }
 
-    moveStone(move: Move): void {
+    moveStone(move: Move): Board {
         this.getStoneRef(move.from).isFilled = false;
         this.getStoneRef(V2.midpoint(move.from, move.to)).isFilled = false;
         this.getStoneRef(move.to).isFilled = true;
+        return this;
+    }
+
+    countStonesLeft(): number {
+        let count = 0;
+        this.flatGrid.forEach((loc:Location) => {
+            if (loc.isFilled) {
+                count++;
+            }
+        })
+        return count;
     }
 }

@@ -9,6 +9,10 @@ export default class Location {
         public isSelected: boolean = false) {
     }
 
+    static fromLocation(loc: Location): Location {
+        return new Location(loc.x, loc.y, loc.isFilled, loc.isLocation, loc.isSelected);
+    }
+
     static fromString(x: number, y: number, str: string) {
         switch (str) {
             case '1':
@@ -22,5 +26,9 @@ export default class Location {
 
     get v2(): V2 {
         return new V2(this.x, this.y);
+    }
+
+    clone(): Location {
+        return Location.fromLocation(this);
     }
 }

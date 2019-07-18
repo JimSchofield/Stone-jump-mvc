@@ -30,6 +30,10 @@ export default class V2  {
         return new V2(arr[0], arr[1]);
     }
 
+    clone(): V2 {
+        return V2.fromObject(this);
+    }
+
     /*---- Operations ----*/
 
     add(v2: V2): this {

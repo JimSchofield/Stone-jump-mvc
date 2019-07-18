@@ -27,10 +27,10 @@ export default class Referee {
                 };
 
                 // Whew, we made it and this move is legal:
-                legalMoves.addMove({
+                legalMoves.addMove(new Move(
                     from,
                     to,
-                });
+                ));
             });
 
         return legalMoves;
